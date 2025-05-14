@@ -1,0 +1,4 @@
+[client]
+user=mysqld_exporter
+password=test123
+host=10.102.125.236

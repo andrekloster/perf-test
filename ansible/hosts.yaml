@@ -1,0 +1,10 @@
+all:
+  hosts:
+    vm-test:
+      ansible_host: 10.102.125.211
+      ansible_user: ansible
+      ansible_ssh_private_key_file: ~/.ssh/id_rsa
+  vars:
+    ansible_connection: ssh
+    ansible_ssh_common_args: "-o StrictHostKeyChecking=no"
+    ansible_python_interpreter: /usr/bin/python3

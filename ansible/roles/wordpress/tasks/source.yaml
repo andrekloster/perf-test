@@ -1,0 +1,17 @@
+---
+- name: Create WordPress parent directory
+  ansible.builtin.file:
+    path: "{{ wordpress_root_dir | dirname }}"
+    state: directory
+    owner: "{{ wordpress_user }}"
+    group: "{{ wordpress_group }}"
+    mode: "0755"
+- name: Download and extract WordPress
+  ansible.builtin.unarchive:
+    src: https://wordpress.org/latest.tar.gz
+    dest: "{{ wordpress_root_dir | dirname }}"
+    remote_src: true
+    owner: "{{ wordpress_user }}"
+    group: "{{ wordpress_group }}"
+    creates: "{{ wordpress_root_dir }}/index.php"
+  when: not ansible_check_mode

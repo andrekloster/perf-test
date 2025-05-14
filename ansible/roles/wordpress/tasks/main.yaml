@@ -1,0 +1,11 @@
+---
+- name: Install wordpress dependencies
+  ansible.builtin.include_tasks: packages.yaml
+- name: Download Wordpress source code
+  ansible.builtin.include_tasks: source.yaml
+- name: Configure Apache vHost
+  ansible.builtin.include_tasks: apache.yaml
+- name: Configure MySQL server
+  ansible.builtin.include_tasks: mysql.yaml
+- name: Configure Wordpress
+  ansible.builtin.include_tasks: configure.yaml

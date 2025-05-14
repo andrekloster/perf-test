@@ -1,0 +1,30 @@
+---
+- name: Create WordPress database
+  mysql_db:
+    name: "{{ wordpress_db_name }}"
+    state: present
+    login_unix_socket: /var/run/mysqld/mysqld.sock
+  register: db_created
+
+- name: Create WordPress database user
+  mysql_user:
+    name: "{{ wordpress_db_user }}"
+    password: "{{ wordpress_db_password }}"
+    priv: "{{ wordpress_db_name }}.*:SELECT,INSERT,UPDATE,DELETE,CREATE,DROP,ALTER"
+    host: "{{ wordpress_db_host }}"
+    state: present
+    login_unix_socket: /var/run/mysqld/mysqld.sock
+    column_case_sensitive: false
+  register: user_created
+
+- name: Flush MySQL privileges
+  ansible.builtin.command:
+    cmd: mysql -e "FLUSH PRIVILEGES"
+  changed_when: false
+  when: user_created.changed
+
+- name: Restart MySQL service if needed
+  ansible.builtin.service:
+    name: mysql
+    state: restarted
+  when: db_created.changed or user_created.changed

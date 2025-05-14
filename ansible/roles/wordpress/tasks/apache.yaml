@@ -1,0 +1,28 @@
+---
+- name: Create WordPress Apache configuration
+  ansible.builtin.template:
+    src: wordpress.conf.j2
+    dest: /etc/apache2/sites-available/wordpress.conf
+    owner: root
+    group: root
+    mode: "0644"
+  notify: Reload apache
+- name: Enable WordPress site
+  ansible.builtin.command:
+    cmd: a2ensite wordpress
+    creates: /etc/apache2/sites-enabled/wordpress.conf
+  notify: Restart apache
+- name: Enable Apache rewrite module
+  ansible.builtin.apache2_module:
+    name: rewrite
+    state: present
+  notify: Restart apache
+- name: Check if default site is enabled
+  ansible.builtin.stat:
+    path: /etc/apache2/sites-enabled/000-default.conf
+  register: default_site_enabled
+- name: Disable default site
+  ansible.builtin.command:
+    cmd: a2dissite 000-default
+  when: default_site_enabled.stat.exists and wordpress_disable_default_site
+  notify: Reload apache

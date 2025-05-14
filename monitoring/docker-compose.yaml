@@ -16,6 +16,20 @@ services:
       - backend
     restart: always
 
+  mysqld_exporter:
+    image: prom/mysqld-exporter:latest
+    container_name: mysqld_exporter
+    restart: always
+    command:
+      - "--config.my-cnf=/etc/mysqld_exporter.cnf"
+      - "--web.listen-address=0.0.0.0:9104"
+    volumes:
+      - ./exporter/mysqld_exporter.cnf:/etc/mysqld_exporter.cnf:ro
+    ports:
+      - "9104:9104"
+    networks:
+      - backend
+
   grafana:
     container_name: grafana
     image: grafana/grafana:11.6.1

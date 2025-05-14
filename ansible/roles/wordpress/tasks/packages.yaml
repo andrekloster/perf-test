@@ -1,0 +1,4 @@
+---
+- name: Install Wordpress dependencies
+  ansible.builtin.apt:
+    name: "{{ wordpress_base_packages }}"

@@ -1,0 +1,6 @@
+---
+- name: Test Playbook
+  hosts: all
+  become: true
+  roles:
+    - wordpress

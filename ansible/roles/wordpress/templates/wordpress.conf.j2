@@ -1,0 +1,16 @@
+<VirtualHost *:80>
+    {% if wordpress_servername is defined -%}
+    ServerName {{ wordpress_servername }}
+    {% endif -%}
+    DocumentRoot {{ wordpress_root_dir }}
+    <Directory {{ wordpress_root_dir }}>
+        Options FollowSymLinks
+        AllowOverride Limit Options FileInfo
+        DirectoryIndex index.php
+        Require all granted
+    </Directory>
+    <Directory {{ wordpress_root_dir }}/wp-content>
+        Options FollowSymLinks
+        Require all granted
+    </Directory>
+</VirtualHost>
