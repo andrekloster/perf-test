@@ -1,11 +1,8 @@
 ---
-# roles/wordpress/tasks/configure.yaml
-
 - name: Check if wp-config.php exists
   ansible.builtin.stat:
     path: "{{ wordpress_root_dir }}/wp-config.php"
   register: wp_config
-
 - name: Configure WordPress
   when: not wp_config.stat.exists
   block:
@@ -14,10 +11,9 @@
         src: "{{ wordpress_root_dir }}/wp-config-sample.php"
         dest: "{{ wordpress_root_dir }}/wp-config.php"
         remote_src: yes
-        owner: www-data
-        group: www-data
+        owner: "{{ wordpress_user }}"
+        group: "{{ wordpress_group }}"
         mode: "0640"
-
     - name: Set WordPress database credentials
       ansible.builtin.replace:
         path: "{{ wordpress_root_dir }}/wp-config.php"
@@ -30,35 +26,30 @@
           replace: "'{{ wordpress_db_user }}'"
         - regexp: "'password_here'"
           replace: "'{{ wordpress_db_password }}'"
-
     - name: Configure database host if not localhost
       ansible.builtin.replace:
         path: "{{ wordpress_root_dir }}/wp-config.php"
         regexp: "'localhost'"
         replace: "'{{ wordpress_db_host }}'"
       when: wordpress_db_host != 'localhost'
-
     - name: Fetch WordPress secret keys and salts
       ansible.builtin.uri:
         url: https://api.wordpress.org/secret-key/1.1/salt/
         return_content: yes
       register: wp_salts
-
     - name: Remove default authentication keys and salts
       ansible.builtin.replace:
         path: "{{ wordpress_root_dir }}/wp-config.php"
         regexp: "define\\(\\s*'(AUTH_KEY|SECURE_AUTH_KEY|LOGGED_IN_KEY|NONCE_KEY|AUTH_SALT|SECURE_AUTH_SALT|LOGGED_IN_SALT|NONCE_SALT)'\\s*,\\s*'put your unique phrase here'\\s*\\);"
         replace: ""
-
     - name: Insert fetched secret keys and salts
       ansible.builtin.replace:
         path: "{{ wordpress_root_dir }}/wp-config.php"
         regexp: "(\\*\\s*@since 2\\.6\\.0\\s*\\*/)\\s*"
         replace: "\\1\n {{ wp_salts.content }}\n"
-
 - name: Ensure proper permissions
   ansible.builtin.file:
     path: "{{ wordpress_root_dir }}/wp-config.php"
-    owner: www-data
-    group: www-data
+    owner: "{{ wordpress_user }}"
+    group: "{{ wordpress_group }}"
     mode: "0640"
