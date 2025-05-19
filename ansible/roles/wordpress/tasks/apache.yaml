@@ -7,16 +7,19 @@
     group: root
     mode: "0644"
   notify: Reload apache
+  when: not ansible_check_mode
 - name: Enable WordPress site
   ansible.builtin.command:
     cmd: a2ensite wordpress
     creates: /etc/apache2/sites-enabled/wordpress.conf
   notify: Restart apache
+  when: not ansible_check_mode
 - name: Enable Apache rewrite module
   ansible.builtin.apache2_module:
     name: rewrite
     state: present
   notify: Restart apache
+  when: not ansible_check_mode
 - name: Check if default site is enabled
   ansible.builtin.stat:
     path: /etc/apache2/sites-enabled/000-default.conf

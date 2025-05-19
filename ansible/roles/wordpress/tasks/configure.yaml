@@ -1,8 +1,8 @@
----
 - name: Check if wp-config.php exists
   ansible.builtin.stat:
     path: "{{ wordpress_root_dir }}/wp-config.php"
   register: wp_config
+
 - name: Configure WordPress
   when: not wp_config.stat.exists
   block:
@@ -14,6 +14,7 @@
         owner: "{{ wordpress_user }}"
         group: "{{ wordpress_group }}"
         mode: "0640"
+      ignore_errors: "{{ ansible_check_mode }}"
     - name: Set WordPress database credentials
       ansible.builtin.replace:
         path: "{{ wordpress_root_dir }}/wp-config.php"
@@ -26,30 +27,35 @@
           replace: "'{{ wordpress_db_user }}'"
         - regexp: "'password_here'"
           replace: "'{{ wordpress_db_password }}'"
+      when: not ansible_check_mode or wp_config.stat.exists
     - name: Configure database host if not localhost
       ansible.builtin.replace:
         path: "{{ wordpress_root_dir }}/wp-config.php"
         regexp: "'localhost'"
         replace: "'{{ wordpress_db_host }}'"
-      when: wordpress_db_host != 'localhost'
+      when: wordpress_db_host != 'localhost' and (not ansible_check_mode or wp_config.stat.exists)
     - name: Fetch WordPress secret keys and salts
       ansible.builtin.uri:
         url: https://api.wordpress.org/secret-key/1.1/salt/
         return_content: yes
       register: wp_salts
+      when: not ansible_check_mode or wp_config.stat.exists
     - name: Remove default authentication keys and salts
       ansible.builtin.replace:
         path: "{{ wordpress_root_dir }}/wp-config.php"
         regexp: "define\\(\\s*'(AUTH_KEY|SECURE_AUTH_KEY|LOGGED_IN_KEY|NONCE_KEY|AUTH_SALT|SECURE_AUTH_SALT|LOGGED_IN_SALT|NONCE_SALT)'\\s*,\\s*'put your unique phrase here'\\s*\\);"
         replace: ""
+      when: not ansible_check_mode or wp_config.stat.exists
     - name: Insert fetched secret keys and salts
       ansible.builtin.replace:
         path: "{{ wordpress_root_dir }}/wp-config.php"
         regexp: "(\\*\\s*@since 2\\.6\\.0\\s*\\*/)\\s*"
         replace: "\\1\n {{ wp_salts.content }}\n"
-- name: Ensure proper permissions
-  ansible.builtin.file:
-    path: "{{ wordpress_root_dir }}/wp-config.php"
-    owner: "{{ wordpress_user }}"
-    group: "{{ wordpress_group }}"
-    mode: "0640"
+      when: not ansible_check_mode or wp_config.stat.exists
+    - name: Ensure proper permissions
+      ansible.builtin.file:
+        path: "{{ wordpress_root_dir }}/wp-config.php"
+        owner: "{{ wordpress_user }}"
+        group: "{{ wordpress_group }}"
+        mode: "0640"
+      when: not ansible_check_mode or wp_config.stat.exists
